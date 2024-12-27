@@ -21,11 +21,11 @@ const Sidebar = () => {
             <Link
               key={item.name}
               to={item.path}
-              className={\`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors \${
+              className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
                 location.pathname === item.path
                   ? 'bg-primary text-white'
                   : 'hover:bg-gray-700'
-              }\`}
+              }`}
             >
               <span>{item.icon}</span>
               <span>{item.name}</span>

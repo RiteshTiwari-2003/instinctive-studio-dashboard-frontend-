@@ -2,14 +2,6 @@ import { create } from 'zustand';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL;
 
-const handleResponse = async (response) => {
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.error || 'Something went wrong');
-  }
-  return response.json();
-};
-
 const useStore = create((set) => ({
   students: [],
   courses: [],
@@ -23,21 +15,26 @@ const useStore = create((set) => ({
     set({ loading: true, error: null });
     try {
       const response = await fetch(`${API_BASE_URL}/students`);
-      const data = await handleResponse(response);
-      set({ students: data, error: null });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to fetch students');
+      }
+      const data = await response.json();
+      set({ students: data, loading: false, error: null });
     } catch (error) {
       console.error('Error fetching students:', error);
-      set({ error: error.message });
-    } finally {
-      set({ loading: false });
+      set({ error: error.message, loading: false });
     }
   },
 
   fetchCourses: async () => {
-    set({ error: null });
     try {
       const response = await fetch(`${API_BASE_URL}/courses`);
-      const data = await handleResponse(response);
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to fetch courses');
+      }
+      const data = await response.json();
       set({ courses: data, error: null });
     } catch (error) {
       console.error('Error fetching courses:', error);
@@ -45,77 +42,33 @@ const useStore = create((set) => ({
     }
   },
 
-  addStudent: async (studentData) => {
+  addStudent: async (formData) => {
     set({ error: null });
     try {
       const response = await fetch(`${API_BASE_URL}/students`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...studentData,
-          courseIds: studentData.courses
-        }),
+        body: formData // FormData will set the correct Content-Type header automatically
       });
-      const data = await handleResponse(response);
-      set((state) => ({
-        students: [...state.students, data],
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to add student');
+      }
+      
+      const newStudent = await response.json();
+      
+      set(state => ({
+        students: [newStudent, ...state.students],
         error: null
       }));
-      return data;
+      
+      return newStudent;
     } catch (error) {
       console.error('Error adding student:', error);
       set({ error: error.message });
       throw error;
     }
-  },
-
-  updateStudent: async (id, updates) => {
-    set({ error: null });
-    try {
-      const response = await fetch(`${API_BASE_URL}/students/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...updates,
-          courseIds: updates.courses
-        }),
-      });
-      const data = await handleResponse(response);
-      set((state) => ({
-        students: state.students.map((student) =>
-          student.id === id ? data : student
-        ),
-        error: null
-      }));
-      return data;
-    } catch (error) {
-      console.error('Error updating student:', error);
-      set({ error: error.message });
-      throw error;
-    }
-  },
-
-  deleteStudent: async (id) => {
-    set({ error: null });
-    try {
-      const response = await fetch(`${API_BASE_URL}/students/${id}`, {
-        method: 'DELETE',
-      });
-      await handleResponse(response);
-      set((state) => ({
-        students: state.students.filter((student) => student.id !== id),
-        error: null
-      }));
-    } catch (error) {
-      console.error('Error deleting student:', error);
-      set({ error: error.message });
-      throw error;
-    }
-  },
+  }
 }));
 
 export default useStore;

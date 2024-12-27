@@ -15,16 +15,10 @@ export const api = {
     return handleResponse(response);
   },
 
-  addStudent: async (studentData) => {
+  addStudent: async (formData) => {
     const response = await fetch(`${API_BASE_URL}/students`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        ...studentData,
-        courseIds: studentData.courses
-      }),
+      body: formData, // Send FormData directly
     });
     return handleResponse(response);
   },
@@ -35,10 +29,7 @@ export const api = {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        ...updates,
-        courseIds: updates.courses
-      }),
+      body: JSON.stringify(updates),
     });
     return handleResponse(response);
   },
